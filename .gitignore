@@ -1,0 +1,16 @@
+# Generated Java output
+**/out/
+*.class
+
+# Local application data
+**/airport.db
+**/logs/
+
+# Local project archives
+*.zip
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
