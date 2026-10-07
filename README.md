@@ -1,61 +1,111 @@
-# Airport Management System  (Java Swing + JDBC + SQLite)
+# Airport Management System
 
-Project Review 1 - GUI Design, Database Design, JDBC.
+A desktop airport-management application built with Java Swing, JDBC, and SQLite.
+The current stable release is **V2**. The original V1 source is preserved in
+[`archive/v1`](archive/v1/), and the V1 release is tagged `v1.0.0`.
 
-## How to run
-Needs JDK 11 or newer (`java -version`, `javac -version`).
+## Features
 
-* Windows: double-click `run.bat`
-* Linux / macOS: `./run.sh`
-* Any IDE (VS Code / IntelliJ / Eclipse): add `lib/sqlite-jdbc.jar` to the classpath, mark `src` as the source folder, run `airport.Main`. **Run from the project root folder** (the app reads `sql/schema.sql`).
+V2 includes role-based sign-in (admin and staff), management screens for
+passengers, employees, flights and bookings, booking and check-in workflows,
+reports and CSV/TXT export, activity logging, a seat map, cancellation refunds,
+passenger trip history, and a saved boarding pass. Database initialization and
+older-database migration are handled by the application.
 
-On first run the app creates `airport.db` with all tables and sample data. Delete `airport.db` to reset.
+See [CHANGELOG.md](CHANGELOG.md) for the release summary.
 
-## Folder layout
+## Requirements
+
+- JDK 11 or newer (`java` and `javac` on `PATH`)
+- The SQLite JDBC driver is included in `lib/sqlite-jdbc.jar`
+
+## Run
+
+Run from the repository root so the application can find the SQL scripts:
+
+- **Windows:** `run.bat`
+- **Linux/macOS:** `./run.sh`
+
+The scripts compile Java sources from `src/main/java` into `build/classes` and
+launch `airport.Main`. Compilation output and runtime data are local and ignored
+by Git.
+
+### Demo accounts
+
+The application seeds demo accounts on first startup:
+
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin` | `admin123` |
+| Staff | `staff` | `staff123` |
+
+These credentials are for local demonstration only. Do not use them for a
+deployed or shared installation.
+
+## Project layout
+
+```text
+.
+├── archive/v1/                 # Preserved V1 source and run scripts
+├── src/main/java/airport/
+│   ├── Main.java
+│   ├── db/                     # SQLite connection and DAO classes
+│   ├── exception/              # Application exceptions
+│   ├── interfaces/              # Domain and DAO interfaces
+│   ├── model/                   # Airport domain models
+│   ├── service/                 # Booking, authentication, and reports
+│   ├── ui/                      # Swing screens and dialogs
+│   └── util/                    # Logging, export, formatting, validation
+├── sql/
+│   ├── schema.sql
+│   └── sample_data.sql
+├── lib/sqlite-jdbc.jar
+├── run.bat
+└── run.sh
 ```
-AirportManagement/
- |- lib/sqlite-jdbc.jar          JDBC driver
- |- sql/schema.sql               DATABASE DESIGN (6 tables, keys, checks)
- |- sql/sample_data.sql          demo flights, passengers, employees
- |- src/airport/Main.java
- |- src/airport/ui/              GUI DESIGN  (Swing screens)
- |- src/airport/db/              JDBC        (connection + 4 DAO classes)
- |- src/airport/model/           OOP classes
- |- src/airport/exception/       custom exceptions
-```
 
-## Database design (SQLite)
-passenger, employee (Pilot / CabinCrew / AirportStaff in one table with a `role` column),
-flight (Domestic / International with a `flight_type` column), booking, payment, checkin.
+The existing `airport` package hierarchy is retained rather than renaming all
+classes as part of a repository reorganization. Source files follow the Java
+package-to-directory convention and use the conventional `src/main/java` source
+root.
 
-Relationships: booking -> passenger, booking -> flight, payment -> booking (1:1),
-checkin -> booking (1:1), flight -> employee (pilot).
-Constraints: PRIMARY KEY AUTOINCREMENT, FOREIGN KEY (enabled with PRAGMA), UNIQUE (flight_no, passport),
-CHECK (age, seats, status, role, payment method), partial UNIQUE index so a seat cannot be double-booked.
+## Build verification
 
-## JDBC concepts used
-DriverManager / Connection, PreparedStatement (no SQL injection), ResultSet mapping,
-generated keys, transactions (`setAutoCommit(false)`, commit, rollback) for booking, cancel and check-in,
-try-with-resources, joins, LIKE searches.
+GitHub Actions compiles the project with JDK 11 on pushes and pull requests.
+There is no automated test suite included in this repository yet.
 
-## OOP concepts and where to find them
-| Concept | Where |
-|---|---|
-| Encapsulation | private fields + getters/setters in every model class |
-| Inheritance | `Person -> Passenger`, `Person -> Employee -> Pilot / CabinCrew / AirportStaff`, `Flight -> DomesticFlight / InternationalFlight`, `Payment -> CardPayment / UPIPayment / CashPayment` |
-| Polymorphism | `Flight.calculateFare()`, `Payment.validate()/getProcessingFee()`, `Employee.getDetails()` |
-| Abstraction | abstract `Person`, `Employee`, `Flight`, `Payment` |
-| Interfaces | `Bookable` (Flight), `Payable` (Payment) |
-| Constructors | every model class (`new Passenger(...)`, `new DomesticFlight(...)`) |
-| Overriding | `taxAndFees()` (5% GST vs 12% tax + Rs.1500), `getProcessingFee()` (card 2%), `getRole()` |
-| Overloading | `FlightDAO.search(...)` x3, `BookingDAO.bookTicket(...)` x2, `BookingDAO.checkIn(...)` x2 |
-| Collections | `ArrayList<Passenger/Flight/Employee/Booking>`, `HashSet` for taken seats, `HashMap` of screens |
-| Exception handling | `AirportException`, `SeatUnavailableException`, `InvalidBookingException`, `PaymentException`, input `Validate` |
-| File / DB handling | all data is saved in `airport.db` through JDBC; SQL scripts are read from `sql/` |
+## Releases and versioning
 
-## Business rules
-* Business class fare = 2.5 x economy. Domestic tax 5%; international tax 12% + Rs.1500 fee.
-* Card payment has a 2% fee; card = 16 digits + 3-digit CVV; UPI must look like `name@bank`; cash must cover the total.
-* One active booking per passenger per flight; seats are auto-allotted (1A, 1B ...); cancelling frees the seat.
-* Check-in baggage limit: 25 kg economy, 40 kg business.
-* A passenger or flight that already has bookings cannot be deleted.
+`main` contains the current stable V2. Releases are marked with Git tags rather
+than long-lived version branches: `v1.0.0` identifies the preserved V1 snapshot,
+and `v2.0.0` identifies V2. See the GitHub Releases page for release notes.
+
+Versions follow `MAJOR.MINOR.PATCH`: increase MAJOR for incompatible changes,
+MINOR for backward-compatible features, and PATCH for backward-compatible bug
+fixes. A substantial feature is not automatically a major version; if existing
+users and data remain compatible, it can still be a MINOR release.
+
+Examples for this application:
+
+- `v2.0.0`: the V2 release, a major upgrade from V1 with authentication,
+  role-based access, refunds, and database migration.
+- `v2.1.0`: a future backward-compatible feature, such as an additional report
+  that leaves existing screens and stored data usable.
+- `v2.1.1`: a backward-compatible bug fix, such as correcting a report total
+  without changing its interface or database format.
+- `v3.0.0`: an incompatible change, such as removing a supported data format or
+  changing stored booking data in a way that existing databases cannot migrate
+  automatically.
+
+Keep `main` on the latest stable version and use short-lived branches for
+individual changes. Permanent `V1` and `V2` branches would keep two active lines
+of development that must be updated and reconciled separately. The V1 tag
+provides a stable pointer to the old snapshot; its Git history preserves how
+`main` progressed to V2. A GitHub Release can be published for each tag to add
+human-readable notes and downloadable assets, but it does not replace the tag.
+
+## License
+
+No license has been added. Public visibility does not itself grant permission
+to reuse or redistribute the code; add a license once the project owner has
+chosen its terms.

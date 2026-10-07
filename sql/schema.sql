@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS booking (
     booking_time   TEXT    NOT NULL,
     status         TEXT    NOT NULL DEFAULT 'CONFIRMED'
                    CHECK (status IN ('CONFIRMED','CHECKED_IN','CANCELLED')),
+    refund_amount  REAL    NOT NULL DEFAULT 0,
     FOREIGN KEY (passenger_id) REFERENCES passenger(passenger_id) ON DELETE RESTRICT,
     FOREIGN KEY (flight_id)    REFERENCES flight(flight_id)       ON DELETE RESTRICT
 );
@@ -87,4 +88,13 @@ CREATE TABLE IF NOT EXISTS checkin (
     baggage_kg     REAL    NOT NULL CHECK (baggage_kg >= 0),
     gate           TEXT    NOT NULL,
     FOREIGN KEY (booking_id) REFERENCES booking(booking_id) ON DELETE CASCADE
+);
+
+-- Login accounts (passwords are stored as salted SHA-256 hashes, never as plain text)
+CREATE TABLE IF NOT EXISTS user_account (
+    user_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    username       TEXT    NOT NULL UNIQUE,
+    password_hash  TEXT    NOT NULL,
+    full_name      TEXT    NOT NULL,
+    role           TEXT    NOT NULL CHECK (role IN ('ADMIN','STAFF'))
 );

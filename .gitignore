@@ -1,10 +1,13 @@
 # Generated Java output
 **/out/
+/build/
 *.class
+sources.txt
 
 # Local application data
 **/airport.db
 **/logs/
+**/exports/
 
 # Local project archives
 *.zip
