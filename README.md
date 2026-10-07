@@ -106,6 +106,4 @@ human-readable notes and downloadable assets, but it does not replace the tag.
 
 ## License
 
-No license has been added. Public visibility does not itself grant permission
-to reuse or redistribute the code; add a license once the project owner has
-chosen its terms.
+This project is licensed under the [MIT License](LICENSE).
