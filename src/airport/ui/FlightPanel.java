@@ -128,7 +128,7 @@ public class FlightPanel extends CrudPanel {
         fb.add("Airline", airline);
         fb.add("From", origin);
         fb.add("To", destination);
-        fb.add("Departure  (arrow keys change the selected part)", departure);
+        fb.add("Departure  (click to pick a date)", departure);
         fb.add("Arrival", arrival);
         fb.add("Total seats", seats);
         fb.add("Base fare (₹)", fare);
