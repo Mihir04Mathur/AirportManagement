@@ -1,5 +1,7 @@
 package airport.service;
 
+import airport.core.BaseService;
+import airport.core.Result;
 import airport.db.BookingDAO;
 import airport.db.FlightDAO;
 import airport.db.PassengerDAO;
@@ -9,7 +11,6 @@ import airport.model.Booking;
 import airport.model.Flight;
 import airport.model.Passenger;
 import airport.model.Payment;
-import airport.util.AppLogger;
 import airport.util.FormatUtil;
 
 import java.time.Duration;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
  * Business-rule layer between the GUI and the DAO classes.
  * Adds rules (departed flights, passport for international trips, refund policy), logging and exception handling.
  */
-public class BookingService {
+public class BookingService extends BaseService {
     /** Refund policy: 90% of the fare if cancelled 24 hours or more before departure, otherwise 50%. */
     public static final double REFUND_EARLY = 0.90, REFUND_LATE = 0.50;
 
@@ -58,6 +59,16 @@ public class BookingService {
     public Set<String> getTakenSeats(int flightId) throws AirportException { return bookingDao.getTakenSeats(flightId); }
 
     // ---------- booking (overloaded) ----------
+    public Result<Booking> bookTicketResult(int passengerId, int flightId, String travelClass, Payment payment) {
+        try {
+            Booking booking = bookTicket(passengerId, flightId, null, travelClass, payment);
+            return success("Booking confirmed", booking);
+        } catch (AirportException e) {
+            logWarn(e.getMessage());
+            return failure(e.getMessage(), e);
+        }
+    }
+
     public Booking bookTicket(int passengerId, int flightId, String travelClass, Payment payment) throws AirportException {
         return bookTicket(passengerId, flightId, null, travelClass, payment);
     }
@@ -76,20 +87,20 @@ public class BookingService {
                 throw new InvalidBookingException("International travel needs a passport number. Add it in Manage Passengers.");
 
             Booking b = bookingDao.bookTicket(passengerId, flightId, seatNo, travelClass, payment);
-            AppLogger.info(String.format("Booking #%d confirmed: %s on %s, seat %s, %s (%s)",
+            logInfo(String.format("Booking #%d confirmed: %s on %s, seat %s, %s (%s)",
                     b.getId(), p.getName(), f.getFlightNo(), b.getSeatNo(), FormatUtil.money(payment.getTotalCharge()), payment.getMethod()));
             return b;
         } catch (SeatUnavailableException | FlightDepartedException e) {
-            AppLogger.warn("Booking refused: " + e.getMessage());
+            logWarn("Booking refused: " + e.getMessage());
             throw e;
         } catch (PaymentException e) {
-            AppLogger.warn("Payment failed: " + e.getMessage());
+            logWarn("Payment failed: " + e.getMessage());
             throw e;
         } catch (AirportException e) {
-            AppLogger.warn("Booking failed: " + e.getMessage());
+            logWarn("Booking failed: " + e.getMessage());
             throw e;
         } finally {
-            AppLogger.debug("bookTicket finished for passenger #" + passengerId);
+            logDebug("bookTicket finished for passenger #" + passengerId);
         }
     }
 
@@ -121,7 +132,7 @@ public class BookingService {
         if (f != null && hasDeparted(f)) throw new FlightDepartedException(f.getFlightNo(), f.getDepartureTime());
         double refund = previewRefund(b);
         bookingDao.cancel(bookingId, refund);
-        AppLogger.info("Booking #" + bookingId + " cancelled (" + b.getPassengerName() + ", " + b.getFlightNo()
+        logInfo("Booking #" + bookingId + " cancelled (" + b.getPassengerName() + ", " + b.getFlightNo()
                 + "), refund " + FormatUtil.money(refund));
         return refund;
     }
@@ -130,14 +141,14 @@ public class BookingService {
     public String checkIn(int bookingId, double baggageKg) throws AirportException {
         guardCheckIn(bookingId);
         String gate = bookingDao.checkIn(bookingId, baggageKg);
-        AppLogger.info("Check-in done for booking #" + bookingId + ", gate " + gate + ", baggage " + baggageKg + " kg");
+        logInfo("Check-in done for booking #" + bookingId + ", gate " + gate + ", baggage " + baggageKg + " kg");
         return gate;
     }
 
     public String checkIn(int bookingId, double baggageKg, String gate) throws AirportException {
         guardCheckIn(bookingId);
         String g = bookingDao.checkIn(bookingId, baggageKg, gate);
-        AppLogger.info("Check-in done for booking #" + bookingId + ", gate " + g + ", baggage " + baggageKg + " kg");
+        logInfo("Check-in done for booking #" + bookingId + ", gate " + g + ", baggage " + baggageKg + " kg");
         return g;
     }
 

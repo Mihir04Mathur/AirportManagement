@@ -1,5 +1,6 @@
 package airport;
 
+import airport.core.AirportContext;
 import airport.db.DBConnection;
 import airport.exception.AirportException;
 import airport.exception.ConfigurationException;
@@ -25,7 +26,7 @@ public class Main {
         try {
             DBConnection.initialize();                 // creates tables + sample data on first run
             new AuthService().seedDefaultUsers();      // demo accounts (admin / staff) on first run
-            AppLogger.info("Application started");
+            AppLogger.info("Application started in " + AirportContext.APP_ROOT);
         } catch (AirportException | ConfigurationException e) {     // multi-catch: checked + unchecked
             AppLogger.error("Startup failed", e);
             JOptionPane.showMessageDialog(null, e.getMessage(), "Startup error", JOptionPane.ERROR_MESSAGE);

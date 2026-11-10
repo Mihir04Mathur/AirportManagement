@@ -1,5 +1,6 @@
 package airport.db;
 
+import airport.core.AirportContext;
 import airport.exception.*;
 
 import java.io.IOException;
@@ -9,7 +10,7 @@ import java.sql.*;
 
 /** JDBC: creates connections and prepares the database (tables + sample data). */
 public class DBConnection {
-    private static final String URL = "jdbc:sqlite:airport.db";
+    private static final String URL = AirportContext.DB_URL;
 
     private DBConnection() { }
 
@@ -30,9 +31,9 @@ public class DBConnection {
             throw new ConfigurationException("SQLite JDBC driver not found. Keep lib/sqlite-jdbc.jar on the classpath.", e);
         }
         try (Connection con = getConnection()) {
-            runScript(con, Path.of("sql", "schema.sql"));
+            runScript(con, AirportContext.SQL_DIR.resolve("schema.sql"));
             migrate(con);                                  // upgrades databases created by older versions
-            if (isEmpty(con)) runScript(con, Path.of("sql", "sample_data.sql"));
+            if (isEmpty(con)) runScript(con, AirportContext.SQL_DIR.resolve("sample_data.sql"));
         } catch (SQLException e) {
             throw new DatabaseException("Database initialisation failed: " + e.getMessage(), e);
         } catch (IOException e) {

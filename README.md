@@ -26,6 +26,7 @@ AirportManagement/
  |- logs/airport.log             created at run time by java.util.logging
  |- exports/                     default folder for CSV / TXT exports
  |- src/airport/Main.java        entry point
+ |- src/airport/core/            shared project framework (AirportContext, BaseService, Result)
  |- src/airport/ui/              GUI screens (Swing)
  |- src/airport/service/         business rules + reports (BookingService, ReportService)
  |- src/airport/db/              JDBC (connection + DAO classes)
@@ -34,6 +35,15 @@ AirportManagement/
  |- src/airport/exception/       custom exception hierarchy
  |- src/airport/util/            AppLogger, FileLogHandler, CsvExporter, FormatUtil, Validate
 ```
+
+## Project core package (new architecture layer)
+The project now includes a reusable `airport.core` package that centralizes shared application concerns:
+
+- `AirportContext` keeps the project root, database file and log folder in one place.
+- `BaseService` gives all services a common logging and result pattern.
+- `Result<T>` standardizes service responses and reduces ad-hoc error handling.
+
+This improves maintainability, reduces hard-coded paths, and makes it easier to scale the app without changing the rest of the system structure.
 
 ## Database design (SQLite)
 passenger, employee (Pilot / CabinCrew / AirportStaff in one table with a `role` column),

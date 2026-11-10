@@ -1,11 +1,12 @@
 package airport.service;
 
+import airport.core.BaseService;
+import airport.core.Result;
 import airport.db.UserDAO;
 import airport.exception.AirportException;
 import airport.exception.AuthenticationException;
 import airport.exception.ValidationException;
 import airport.model.User;
-import airport.util.AppLogger;
 import airport.util.PasswordUtil;
 
 import java.util.HashMap;
@@ -13,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /** Login / logout with a simple lock-out after repeated wrong passwords. */
-public class AuthService {
+public class AuthService extends BaseService {
     private static final int MAX_ATTEMPTS = 3;
     private static final long LOCK_MILLIS = 30_000;
     private static final Map<String, Integer> failures = new HashMap<>();
@@ -26,7 +27,17 @@ public class AuthService {
         if (dao.count() > 0) return;
         dao.add(new User(0, "admin", PasswordUtil.hash("admin123"), "Administrator", "ADMIN"));
         dao.add(new User(0, "staff", PasswordUtil.hash("staff123"), "Counter Staff", "STAFF"));
-        AppLogger.info("Default accounts created (admin, staff)");
+        logInfo("Default accounts created (admin, staff)");
+    }
+
+    public Result<User> loginResult(String username, String password) {
+        try {
+            User user = login(username, password);
+            return success("Login successful", user);
+        } catch (AirportException e) {
+            logWarn(e.getMessage());
+            return failure(e.getMessage(), e);
+        }
     }
 
     public User login(String username, String password) throws AirportException {
@@ -45,7 +56,7 @@ public class AuthService {
         Optional<User> user = dao.findByUsername(key);
         if (user.isEmpty() || !PasswordUtil.verify(password, user.get().getPasswordHash())) {
             int n = failures.merge(key, 1, Integer::sum);
-            AppLogger.warn("Failed login for '" + key + "' (attempt " + n + ")");
+            logWarn("Failed login for '" + key + "' (attempt " + n + ")");
             if (n >= MAX_ATTEMPTS) {
                 lockedUntil.put(key, System.currentTimeMillis() + LOCK_MILLIS);
                 throw new AuthenticationException("Too many failed attempts. Account locked for 30 seconds.");
@@ -54,12 +65,12 @@ public class AuthService {
         }
         failures.remove(key);
         Session.login(user.get());
-        AppLogger.info("Login: " + user.get());
+        logInfo("Login: " + user.get());
         return user.get();
     }
 
     public void logout() {
-        if (Session.isLoggedIn()) AppLogger.info("Logout: " + Session.getUser());
+        if (Session.isLoggedIn()) logInfo("Logout: " + Session.getUser());
         Session.logout();
     }
 

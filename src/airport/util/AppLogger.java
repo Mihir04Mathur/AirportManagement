@@ -1,10 +1,11 @@
 package airport.util;
 
+import airport.core.AirportContext;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.logging.*;
 
 /** Central logging using java.util.logging. Entries go to the console and to logs/airport.log. */
 public final class AppLogger {
-    public static final Path LOG_FILE = Paths.get("logs", "airport.log");
+    public static final Path LOG_FILE = AirportContext.LOG_DIR.resolve("airport.log");
     private static final Logger LOGGER = Logger.getLogger("airport");
     private static final java.time.format.DateTimeFormatter STAMP = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static boolean ready;
@@ -37,6 +38,11 @@ public final class AppLogger {
 
     public static synchronized void init() {
         if (ready) return;
+        try {
+            Files.createDirectories(AirportContext.LOG_DIR);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not create log directory: " + AirportContext.LOG_DIR, e);
+        }
         LOGGER.setUseParentHandlers(false);
         LOGGER.setLevel(Level.ALL);
         Handler console = new ConsoleHandler();
