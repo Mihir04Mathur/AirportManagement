@@ -53,3 +53,13 @@
 ### Quality
 * 101 automated checks (backend 52 + 28, migration 3, real-window GUI test 18) all passing.
 * The GUI test starts the real window, logs in, fills forms, picks a seat, pays, cancels, checks in and logs out.
+
+## Version 4 - Shared core package and service consistency
+* Added the project-specific `airport.core` package:
+  * `AirportContext` centralizes the application root, SQLite database URL, SQL directory, and log directory.
+  * `BaseService` provides shared logging and typed success/failure result helpers for service classes.
+  * `Result<T>` represents successful or failed service operations, with optional error details.
+* Updated `DBConnection` to use the centralized database and SQL paths.
+* Updated `AppLogger` to use the shared log path and create the log directory when needed.
+* Updated `AuthService` and `BookingService` to inherit common service helpers. Added `loginResult` and `bookTicketResult` while preserving the existing exception-based methods for current callers.
+* Startup logging now records the resolved application root.
